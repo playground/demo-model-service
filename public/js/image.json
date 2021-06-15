@@ -1,32 +1,35 @@
-[
-  {
-    "detectedBox": [
-      "0.129",
-      "0.255",
-      "0.486",
-      "0.415"
-    ],
-    "detectedClass": "hardhat",
-    "detectedScore": 0.9995973110198975
-  },
-  {
-    "detectedBox": [
-      "0.092",
-      "0.175",
-      "1.000",
-      "0.454"
-    ],
-    "detectedClass": "person",
-    "detectedScore": 0.990091860294342
-  },
-  {
-    "detectedBox": [
-      "0.483",
-      "0.179",
-      "1.000",
-      "0.439"
-    ],
-    "detectedClass": "vest",
-    "detectedScore": 0.9794702529907227
-  }
-]
+{
+  "elaspedTime": 233,
+  "bbox": [
+    {
+      "detectedBox": [
+        "0.129",
+        "0.255",
+        "0.486",
+        "0.415"
+      ],
+      "detectedClass": "hardhat",
+      "detectedScore": 0.9995973110198975
+    },
+    {
+      "detectedBox": [
+        "0.092",
+        "0.175",
+        "1.000",
+        "0.454"
+      ],
+      "detectedClass": "person",
+      "detectedScore": 0.990091860294342
+    },
+    {
+      "detectedBox": [
+        "0.483",
+        "0.179",
+        "1.000",
+        "0.439"
+      ],
+      "detectedClass": "vest",
+      "detectedScore": 0.9794702529907227
+    }
+  ]
+}

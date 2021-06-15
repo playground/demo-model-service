@@ -34,7 +34,7 @@ let ieam = {
     const canvas = document.getElementById('canvas');
     const timeDiv = document.getElementById('time');
     let tableDiv = document.getElementById('table');
-    timeDiv.innerHTML = 'Inference time: 331.38';
+    timeDiv.innerHTML = ieam.prevJson.elapsedTime;
 
     let table = document.createElement('table');
     let row = document.createElement('tr');
@@ -56,7 +56,7 @@ let ieam = {
     row.appendChild(cell)
     table.appendChild(row);
 
-  //   let img = new Image();
+    let img = new Image();
   //   img.addEventListener('load', () => {
   //     const { naturalWidth: width, naturalHeight: height } = img;
   //     console.log('loaded', width, height)
