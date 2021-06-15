@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+  <meta charset="utf-8">
+  <title>TFJS IEAM Demo</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      border-spacing: 0;
+      float: left;
+      max-width: 700px;
+      border: 1px solid #ddd;
+      margin-right: 20px;
+      margin-bottom: 20px;
+      table-layout: fixed;
+    }
+
+    th, td {
+        text-align: left;
+        padding: 8px;
+        width: 100%;
+    }
+
+    tr:nth-child(even){background-color: #f2f2f2}
+    tr th:nth-child(n+2){text-align: right}
+    tr td:nth-child(n+2){text-align: right}
+  </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="/static/js/image.js"></script>
+  <body onload="ieam.loadJson('/static/js/image.json')">
+    <div>
+      <form ref='uploadForm' 
+        id='uploadForm' 
+        action='/upload'
+        method='post' 
+        encType="multipart/form-data">
+          <input type="file" name="imageFile" />
+          <input type='submit' value='Upload!' />
+          <div class="output"></div>
+      </form>     
+      <div id="time"></div>
+      <br />
+      <br />
+      <div id="table"></div>
+      <canvas id="canvas"></canvas>
+      <br />
+    </div>
+  
+  </body>
+  <script>
+  $(document).ready(function(){
+    ieam.onSubmit();
+  });
+
+  // setTimeout(() => {
+  //   window.location.reload();
+  // }, 30000)
+  </script>
