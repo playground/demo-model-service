@@ -177,7 +177,6 @@ let ieam = {
   },
   loadModel: async (modelPath) => {
     try {
-      tfnode.node.
       model = await tfnode.node.loadSavedModel(modelPath);
       console.log('loading ', modelPath);
       labels = require(`${modelPath}/assets/labels.json`);

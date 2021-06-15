@@ -1,62 +1,32 @@
 [
   {
     "detectedBox": [
-      "0.113",
-      "0.926",
-      "0.206",
-      "0.974"
-    ],
-    "detectedClass": "hard-hat",
-    "detectedScore": 0.9817293882369995
-  },
-  {
-    "detectedBox": [
-      "0.097",
-      "0.737",
-      "0.208",
-      "0.795"
-    ],
-    "detectedClass": "hard-hat",
-    "detectedScore": 0.9720191359519958
-  },
-  {
-    "detectedBox": [
-      "0.089",
-      "0.252",
-      "0.182",
-      "0.319"
-    ],
-    "detectedClass": "hard-hat",
-    "detectedScore": 0.9550962448120117
-  },
-  {
-    "detectedBox": [
-      "0.088",
-      "0.573",
-      "0.176",
-      "0.634"
-    ],
-    "detectedClass": "hard-hat",
-    "detectedScore": 0.8386975526809692
-  },
-  {
-    "detectedBox": [
-      "0.036",
-      "0.086",
-      "0.117",
-      "0.156"
-    ],
-    "detectedClass": "hard-hat",
-    "detectedScore": 0.799423098564148
-  },
-  {
-    "detectedBox": [
-      "0.100",
-      "0.362",
-      "0.183",
+      "0.129",
+      "0.255",
+      "0.486",
       "0.415"
     ],
-    "detectedClass": "hard-hat",
-    "detectedScore": 0.7413555979728699
+    "detectedClass": "hardhat",
+    "detectedScore": 0.9995973110198975
+  },
+  {
+    "detectedBox": [
+      "0.092",
+      "0.175",
+      "1.000",
+      "0.454"
+    ],
+    "detectedClass": "person",
+    "detectedScore": 0.990091860294342
+  },
+  {
+    "detectedBox": [
+      "0.483",
+      "0.179",
+      "1.000",
+      "0.439"
+    ],
+    "detectedClass": "vest",
+    "detectedScore": 0.9794702529907227
   }
 ]
