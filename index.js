@@ -18,6 +18,7 @@ const logger = new winston.createLogger(myWinstonOptions)
 
 let model;
 let labels;
+let version;
 const currentModelPath = './model';
 const imagePath = './public/input';
 const newModelPath = './model-new';
@@ -111,7 +112,7 @@ let ieam = {
     console.log('predictions:', predictions.length, predictions[0]);
     console.log('time took: ', elapsedTime);
     console.log('build json...');
-    jsonfile.writeFile(`${staticPath}/image.json`, {bbox: predictions, elapsedTime: elapsedTime}, {spaces: 2});
+    jsonfile.writeFile(`${staticPath}/image.json`, {bbox: predictions, elapsedTime: elapsedTime, version: version}, {spaces: 2});
     ieam.renameFile(`${imagePath}/image.png`, `${imagePath}/image-old.png`);  
   },
   traverse: (dir, done) => {
@@ -180,6 +181,7 @@ let ieam = {
       model = await tfnode.node.loadSavedModel(modelPath);
       console.log('loading ', modelPath);
       labels = require(`${modelPath}/assets/labels.json`);
+      version = require(`${modelPath}/assets/version.json`);
       if(modelPath === newModelPath) {
         ieam.moveFiles(currentModelPath, oldModelPath)
         .subscribe({

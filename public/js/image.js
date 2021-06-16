@@ -3,10 +3,10 @@ let ieam = {
   loadJson: (file) => {
     fetch(file).then(async (res) => {
       let json = await res.json();
-      console.log(ieam.prevJson)
       if(JSON.stringify(json) !== JSON.stringify(ieam.prevJson)) {
         ieam.prevJson = json;
         ieam.drawBBox();
+        console.log(ieam.prevJson)
       }
     })
   },
@@ -37,6 +37,9 @@ let ieam = {
   drawBBox: () => {
     let output = document.querySelector('div.output');
     let objDetected = {};
+    let version = document.querySelector('div.version');
+    let vobj = ieam.prevJson.version;
+    version.innerHTML = `Model: ${vobj.name}, Version: ${vobj.version}`
 
     const context = document.getElementById('canvas').getContext('2d');
     const canvas = document.getElementById('canvas');
