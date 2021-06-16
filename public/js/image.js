@@ -2,9 +2,12 @@ let ieam = {
   prevJson: '',
   loadJson: (file) => {
     fetch(file).then(async (res) => {
-      ieam.prevJson = await res.json();
+      let json = await res.json();
       console.log(ieam.prevJson)
-      ieam.drawBBox();
+      if(JSON.stringify(json) !== JSON.stringify(ieam.prevJson)) {
+        ieam.prevJson = json;
+        ieam.drawBBox();
+      }
     })
   },
   onSubmit: () => {
@@ -32,15 +35,18 @@ let ieam = {
     });
   },
   drawBBox: () => {
+    let output = document.querySelector('div.output');
+    let objDetected = {};
+
     const context = document.getElementById('canvas').getContext('2d');
     const canvas = document.getElementById('canvas');
     const timeDiv = document.getElementById('time');
     let table = document.getElementById('table');
-    timeDiv.innerHTML = ieam.prevJson.elapsedTime;
+    timeDiv.innerHTML = `Inference time: ${parseFloat(ieam.prevJson.elapsedTime).toFixed(2)}`;
 
     let rowCount = table.rows.length;
-    for(let i = 1; i < rowCount; i++) {
-      table.deleteRow(1);
+    for(let i = 0; i < rowCount; i++) {
+      table.deleteRow(0);
     }
 
     let row = document.createElement('tr');
@@ -74,6 +80,11 @@ let ieam = {
 
       ieam.prevJson.bbox.forEach((box) => {
         let bbox = box.detectedBox;
+        if(objDetected[box.detectedClass]) {
+          objDetected[box.detectedClass]++;
+        } else {
+          objDetected[box.detectedClass] = 1; 
+        }  
         row = document.createElement('tr');
         cell = document.createElement('td');
         cellText = document.createTextNode(box.detectedClass);
@@ -98,11 +109,16 @@ let ieam = {
         context.fillRect(bbox[1] * width, bbox[0] * height, width * (bbox[3] - bbox[1]),
         height * (bbox[2] - bbox[0]));
         context.font = '15px Arial';
-        context.fillStyle = 'white';
-        context.fillText(`'${box.detectedClass}: ${box.detectedScore}'`, `${box[1]} * width, ${box[0]} * height`, `${box[0]} * height`);
+        context.fillStyle = 'black';
+        context.fillText(`${box.detectedClass}: ${box.detectedScore}`, parseFloat(bbox[1] * width).toFixed(2), parseFloat(bbox[0] * height).toFixed(2), parseFloat(bbox[0] * height).toFixed(2));
         context.lineWidth = 2;
-        context.strokeRect(bbox[1] * width, bbox[0] * height, width * (bbox[3] - bbox[1]), height * (bbox[2] - bbox[0]));      
+        context.strokeRect(parseFloat(bbox[1] * width).toFixed(2), parseFloat(bbox[0] * height).toFixed(2), parseFloat(width * (bbox[3] - bbox[1])).toFixed(2), parseFloat(height * (bbox[2] - bbox[0])).toFixed(2));      
       })
+      let objStr = 'Objects detected: ';
+      Object.keys(objDetected).map((key) => {
+        objStr += `${key}=${objDetected[key]} `
+      })
+      output.innerHTML = objStr;
     });
     img.src = '/static/input/image-old.png';
   }  
