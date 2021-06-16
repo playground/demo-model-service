@@ -69,7 +69,7 @@ app.get("*",  (req, res) => {
   )
 });
 
-app.listen(3000, () => {
+app.listen(3001, () => {
  console.log("Server running on port 3000");
 });
 
@@ -104,14 +104,14 @@ let ieam = {
         predictions.push({
           detectedBox: boxes[0][i].map((el)=>el.toFixed(3)),
           detectedClass: labels[classes[0][i]],
-          detectedScore: scores[0][i]
+          detectedScore: scores[0][i].toFixed(3)
         });
       }
     }
     console.log('predictions:', predictions.length, predictions[0]);
     console.log('time took: ', elapsedTime);
     console.log('build json...');
-    jsonfile.writeFile(`${staticPath}/image.json`, predictions, {spaces: 2});
+    jsonfile.writeFile(`${staticPath}/image.json`, {bbox: predictions, elapsedTime: elapsedTime}, {spaces: 2});
     ieam.renameFile(`${imagePath}/image.png`, `${imagePath}/image-old.png`);  
   },
   traverse: (dir, done) => {
