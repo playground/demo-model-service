@@ -39,7 +39,7 @@ let ieam = {
     let objDetected = {};
     let version = document.querySelector('div.version');
     let vobj = ieam.prevJson.version;
-    version.innerHTML = `Model: ${vobj.name}, Version: ${vobj.version}`
+    version.innerHTML = vobj ? `Model: ${vobj.name}, Version: ${vobj.version}` : 'version missing'
 
     const context = document.getElementById('canvas').getContext('2d');
     const canvas = document.getElementById('canvas');

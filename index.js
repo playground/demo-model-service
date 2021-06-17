@@ -24,7 +24,9 @@ const imagePath = './public/input';
 const newModelPath = './model-new';
 const oldModelPath = './model-old';
 const staticPath = './public/js';
+const mmsPath = './mms-shared';
 let timer;
+const intervalMS = 10000;
 
 app.use(fileUpload());
 
@@ -137,23 +139,39 @@ let ieam = {
         });
       })();
     });
-  },  
-  moveFiles2: (srcDir, destDir, files) => {
-    return new Observable((observer) => {
-      let fullSrcDir = `${__dirname}/${srcDir}/`.replace('./', '');
-      let fullDestDir = `${__dirname}/${destDir}/`.replace('./', '');
-      // console.log('full: ', fullSrcDir, fullDestDir)
-      files.map((file) => {
-        let name = file.replace(fullSrcDir, '');
-        let srcFile = path.join(fullSrcDir, name);
-        let destFile = path.join(fullDestDir, name);
-        console.log(srcFile, destFile);
-        ieam.renameFile(srcFile, destFile);
-        observer.next();
-        observer.complete();
-      });  
-    });  
   },
+  checkMMS: () => {
+    let list = fs.readdirSync(mmsPath);
+    list = list.filter(item => /(\.zip)$/.test(item));
+    return list;
+  },
+  unzipMMS: (files) => {
+    return new Observable((observer) => {
+      let arg = '';
+      console.log('list', files);
+      files.forEach((file) => {
+        if(file === 'model.zip') {
+          arg = `unzip -o ${mmsPath}/${file} -d ${newModelPath}`;
+        } else if(file === 'image.zip') {
+          arg = `unzip -o ${mmsPath}/${file} -d ${imagePath}`;
+        } else {
+          observer.next();
+          observer.complete();
+        }
+        exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
+          fs.unlinkSync(`${mmsPath}/${file}`);
+          if(!err) {
+            observer.next();
+            observer.complete();
+          } else {
+            console.log(err);
+            observer.next();
+            observer.complete();
+          }
+        });
+      })
+    });    
+  },  
   moveFiles: (srcDir, destDir) => {
     return new Observable((observer) => {
       let arg = `cp -r ${srcDir}/* ${destDir}`;
@@ -178,10 +196,12 @@ let ieam = {
   },
   loadModel: async (modelPath) => {
     try {
+      delete(model);
       model = await tfnode.node.loadSavedModel(modelPath);
       console.log('loading ', modelPath);
       labels = require(`${modelPath}/assets/labels.json`);
       version = require(`${modelPath}/assets/version.json`);
+      console.log('version: ', version)
       if(modelPath === newModelPath) {
         ieam.moveFiles(currentModelPath, oldModelPath)
         .subscribe({
@@ -189,20 +209,21 @@ let ieam = {
             .subscribe({
               next: (v) => {
                 console.log('reset timer');
-                ieam.setInterval(10000); 
+                ieam.resetTimer();
               },   
               error: (e) => {
                 console.log('reset timer');
-                ieam.setInterval(10000);  
+                ieam.resetTimer(); 
               }
             }),  
           error: (e) => {
             console.log('reset timer');
-            ieam.setInterval(10000);  
+            ieam.resetTimer(); 
           }
         })
       }
     } catch(e) {
+      console.log(e);
       if(modelPath === newModelPath) {
         ieam.loadModel(currentModelPath);
       } else if(modelPath === currentModelPath) {
@@ -210,7 +231,13 @@ let ieam = {
       } else {
         console.log('PANIC! no good model to load');
       }
+      ieam.resetTimer();
     }
+  },
+  resetTimer: () => {
+    clearInterval(timer);
+    timer = null;
+    ieam.setInterval(intervalMS);  
   },
   checkNewModel: async () => {
       let files = fs.readdirSync(newModelPath);
@@ -219,16 +246,27 @@ let ieam = {
       if(list.length > 0) {
         clearInterval(timer);
         await ieam.loadModel(newModelPath);
-        // ieam.setInterval(10000);
+        // ieam.setInterval(intervalMS);
       }
   },
   setInterval: (ms) => {
     timer = setInterval(async () => {
-      await ieam.checkNewModel();
-      ieam.checkImage();
+      let mmsFiles = ieam.checkMMS(); 
+      clearInterval(timer);
+      if(mmsFiles && mmsFiles.length > 0) {
+        ieam.unzipMMS(mmsFiles)
+        .subscribe(async () => {
+          await ieam.checkNewModel();
+          ieam.setInterval(intervalMS);
+        }) 
+      } else {
+        await ieam.checkNewModel();
+        ieam.checkImage();
+        ieam.setInterval(intervalMS);
+      }
     }, ms);
   }    
 }
 
-ieam.loadModel(currentModelPath);
-ieam.setInterval(10000);
+ieam.loadModel(currentModelPath)
+ieam.setInterval(intervalMS);

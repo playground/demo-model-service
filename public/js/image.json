@@ -2,46 +2,26 @@
   "bbox": [
     {
       "detectedBox": [
-        "0.108",
-        "0.098",
-        "0.961",
-        "0.932"
+        "0.058",
+        "0.405",
+        "0.169",
+        "0.521"
       ],
-      "detectedClass": "person",
-      "detectedScore": "0.998"
+      "detectedClass": "hardhat",
+      "detectedScore": "0.989"
     },
     {
       "detectedBox": [
-        "0.112",
-        "0.274",
-        "0.514",
-        "0.740"
+        "0.012",
+        "0.356",
+        "0.409",
+        "0.872"
       ],
-      "detectedClass": "head",
-      "detectedScore": "0.992"
-    },
-    {
-      "detectedBox": [
-        "0.286",
-        "0.276",
-        "0.486",
-        "0.734"
-      ],
-      "detectedClass": "mask",
-      "detectedScore": "0.986"
-    },
-    {
-      "detectedBox": [
-        "0.603",
-        "0.034",
-        "0.934",
-        "0.821"
-      ],
-      "detectedClass": "lab_coat",
-      "detectedScore": "0.532"
+      "detectedClass": "hardhat",
+      "detectedScore": "0.564"
     }
   ],
-  "elapsedTime": 263.0859680175781,
+  "elapsedTime": 11185.54396390915,
   "version": {
     "name": "Good model",
     "version": "1.0.0"
