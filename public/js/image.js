@@ -1,5 +1,7 @@
 let ieam = {
   prevJson: '',
+  timer: null,
+  intervalMS: 5000,
   loadJson: (file) => {
     fetch(file).then(async (res) => {
       let json = await res.json();
@@ -8,6 +10,26 @@ let ieam = {
         ieam.drawBBox();
         console.log(ieam.prevJson)
       }
+    })
+  },
+  setInterval: (ms) => {
+    ieam.timer = setInterval(async () => {
+      ieam.loadJson('/static/js/image.json');
+    }, ms);
+  },    
+  resetTimer: () => {
+    clearInterval(ieam.timer);
+    ieam.timer = null;
+    ieam.setInterval(ieam.intervalMS);  
+  },
+  captureCam: () => {
+    const webcamElement = document.getElementById('webcam');
+    const snapSoundElement = document.getElementById('snapSound');
+    const webcam = new Webcam(webcamElement, 'user', canvasElement, snapSoundElement);
+    webcam.start().then((res) => {
+      let picture = web.snap();
+    }).catch((e) => {
+      console.log(e);
     })
   },
   onSubmit: () => {

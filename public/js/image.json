@@ -2,28 +2,18 @@
   "bbox": [
     {
       "detectedBox": [
-        "0.058",
-        "0.405",
-        "0.169",
-        "0.521"
+        "0.053",
+        "0.246",
+        "0.317",
+        "0.733"
       ],
-      "detectedClass": "hardhat",
-      "detectedScore": "0.989"
-    },
-    {
-      "detectedBox": [
-        "0.012",
-        "0.356",
-        "0.409",
-        "0.872"
-      ],
-      "detectedClass": "hardhat",
-      "detectedScore": "0.564"
+      "detectedClass": "hard-hat",
+      "detectedScore": "0.998"
     }
   ],
-  "elapsedTime": 11185.54396390915,
+  "elapsedTime": 186.94640278816223,
   "version": {
-    "name": "Good model",
+    "name": "Poor model",
     "version": "1.0.0"
   }
 }
