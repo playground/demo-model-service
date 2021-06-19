@@ -37,9 +37,10 @@
           <div class="output"></div>
       </form>     
       <div id="time"></div>
+      <div class="version"></div>
       <br />
       <br />
-      <div id="table"></div>
+      <table id="table"></table>
       <canvas id="canvas"></canvas>
       <br />
     </div>
@@ -50,7 +51,7 @@
     ieam.onSubmit();
   });
 
-  // setTimeout(() => {
-  //   window.location.reload();
-  // }, 30000)
+  setInterval(() => {
+    ieam.loadJson('/static/js/image.json');
+  }, 10000)
   </script>

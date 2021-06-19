@@ -2,8 +2,12 @@ let ieam = {
   prevJson: '',
   loadJson: (file) => {
     fetch(file).then(async (res) => {
-      ieam.prevJson = await res.json();
-      console.log(ieam.prevJson)
+      let json = await res.json();
+      if(JSON.stringify(json) !== JSON.stringify(ieam.prevJson)) {
+        ieam.prevJson = json;
+        ieam.drawBBox();
+        console.log(ieam.prevJson)
+      }
     })
   },
   onSubmit: () => {
@@ -20,6 +24,7 @@ let ieam = {
       xhr.onload = function(oEvent) {
         if (xhr.status == 200) {
           output.innerHTML = "Uploaded!";
+          ieam.loadJson('/static/js/image.json');
         } else {
           oOutput.innerHTML = "Error " + xhr.status + " occurred when trying to upload your file.<br \/>";
         }
@@ -30,13 +35,23 @@ let ieam = {
     });
   },
   drawBBox: () => {
+    let output = document.querySelector('div.output');
+    let objDetected = {};
+    let version = document.querySelector('div.version');
+    let vobj = ieam.prevJson.version;
+    version.innerHTML = `Model: ${vobj.name}, Version: ${vobj.version}`
+
     const context = document.getElementById('canvas').getContext('2d');
     const canvas = document.getElementById('canvas');
     const timeDiv = document.getElementById('time');
-    let tableDiv = document.getElementById('table');
-    timeDiv.innerHTML = ieam.prevJson.elapsedTime;
+    let table = document.getElementById('table');
+    timeDiv.innerHTML = `Inference time: ${parseFloat(ieam.prevJson.elapsedTime).toFixed(2)}`;
 
-    let table = document.createElement('table');
+    let rowCount = table.rows.length;
+    for(let i = 0; i < rowCount; i++) {
+      table.deleteRow(0);
+    }
+
     let row = document.createElement('tr');
     let cell = document.createElement('th');
     let cellText = document.createTextNode('Label');
@@ -57,106 +72,57 @@ let ieam = {
     table.appendChild(row);
 
     let img = new Image();
-  //   img.addEventListener('load', () => {
-  //     const { naturalWidth: width, naturalHeight: height } = img;
-  //     console.log('loaded', width, height)
-  //     canvas.width = width;
-  //     canvas.height = height;
-  //     canvas.width = width;
-  //     canvas.height = height;
-  //     context.drawImage(img, 0, 0, width, height);      
-    
-  //       row = document.createElement('tr');
-  //       cell = document.createElement('td');
-  //       cellText = document.createTextNode('person');
-  //       cell.appendChild(cellText);
-  //       row.appendChild(cell)
-  //       cell = document.createElement('td');
-  //       cellText = document.createTextNode('0.756615400314331');
-  //       cell.appendChild(cellText);
-  //       row.appendChild(cell);
-  //       cell = document.createElement('td');
-  //       cellText = document.createTextNode('(0.16226908564567566,0.4117961525917053)');
-  //       cell.appendChild(cellText);
-  //       row.appendChild(cell);
-  //       cell = document.createElement('td');
-  //       cellText = document.createTextNode('(0.966416597366333,0.652163565158844)');
-  //       cell.appendChild(cellText);
-  //       row.appendChild(cell);
-  //       table.appendChild(row);
+    img.addEventListener('load', () => {
+      const { naturalWidth: width, naturalHeight: height } = img;
+      console.log('loaded', width, height)
+      canvas.width = width;
+      canvas.height = height;
+      canvas.width = width;
+      canvas.height = height;
+      context.drawImage(img, 0, 0, width, height);      
 
-  //       context.fillStyle = 'rgba(255,255,255,0.2)';
-  //       context.strokeStyle = 'yellow';
-  //       context.fillRect(0.4117961525917053 * width, 0.16226908564567566 * height, width * 0.240,
-  //       height * 0.804);
-  //       context.font = '15px Arial';
-  //       context.fillStyle = 'white';
-  //       context.fillText('person: 0.757', 0.4117961525917053 * width, 0.16226908564567566 * height, 0.16226908564567566 * height);
-  //       context.lineWidth = 2;
-  //       context.strokeRect(0.4117961525917053 * width, 0.16226908564567566 * height, width * 0.240, height * 0.804);      
-      
-  //       row = document.createElement('tr');
-  //       cell = document.createElement('td');
-  //       cellText = document.createTextNode('head');
-  //       cell.appendChild(cellText);
-  //       row.appendChild(cell)
-  //       cell = document.createElement('td');
-  //       cellText = document.createTextNode('0.6803687810897827');
-  //       cell.appendChild(cellText);
-  //       row.appendChild(cell);
-  //       cell = document.createElement('td');
-  //       cellText = document.createTextNode('(0.19314710795879364,0.4342823922634125)');
-  //       cell.appendChild(cellText);
-  //       row.appendChild(cell);
-  //       cell = document.createElement('td');
-  //       cellText = document.createTextNode('(0.6582494378089905,0.643329918384552)');
-  //       cell.appendChild(cellText);
-  //       row.appendChild(cell);
-  //       table.appendChild(row);
+      ieam.prevJson.bbox.forEach((box) => {
+        let bbox = box.detectedBox;
+        if(objDetected[box.detectedClass]) {
+          objDetected[box.detectedClass]++;
+        } else {
+          objDetected[box.detectedClass] = 1; 
+        }  
+        row = document.createElement('tr');
+        cell = document.createElement('td');
+        cellText = document.createTextNode(box.detectedClass);
+        cell.appendChild(cellText);
+        row.appendChild(cell)
+        cell = document.createElement('td');
+        cellText = document.createTextNode(box.detectedScore);
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+        cell = document.createElement('td');
+        cellText = document.createTextNode(`(${bbox[0]},${bbox[1]})`);
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+        cell = document.createElement('td');
+        cellText = document.createTextNode(`(${bbox[2]},${bbox[3]})`);
+        cell.appendChild(cellText);
+        row.appendChild(cell);
+        table.appendChild(row);
 
-  //       context.fillStyle = 'rgba(255,255,255,0.2)';
-  //       context.strokeStyle = 'yellow';
-  //       context.fillRect(0.4342823922634125 * width, 0.19314710795879364 * height, width * 0.209,
-  //       height * 0.465);
-  //       context.font = '15px Arial';
-  //       context.fillStyle = 'white';
-  //       context.fillText('head: 0.680', 0.4342823922634125 * width, 0.19314710795879364 * height, 0.19314710795879364 * height);
-  //       context.lineWidth = 2;
-  //       context.strokeRect(0.4342823922634125 * width, 0.19314710795879364 * height, width * 0.209, height * 0.465);      
-      
-  //       row = document.createElement('tr');
-  //       cell = document.createElement('td');
-  //       cellText = document.createTextNode('hardhat');
-  //       cell.appendChild(cellText);
-  //       row.appendChild(cell)
-  //       cell = document.createElement('td');
-  //       cellText = document.createTextNode('0.6148210763931274');
-  //       cell.appendChild(cellText);
-  //       row.appendChild(cell);
-  //       cell = document.createElement('td');
-  //       cellText = document.createTextNode('(0.19206060469150543,0.43538331985473633)');
-  //       cell.appendChild(cellText);
-  //       row.appendChild(cell);
-  //       cell = document.createElement('td');
-  //       cellText = document.createTextNode('(0.6574199795722961,0.6440765857696533)');
-  //       cell.appendChild(cellText);
-  //       row.appendChild(cell);
-  //       table.appendChild(row);
-
-  //       context.fillStyle = 'rgba(255,255,255,0.2)';
-  //       context.strokeStyle = 'yellow';
-  //       context.fillRect(0.43538331985473633 * width, 0.19206060469150543 * height, width * 0.209,
-  //       height * 0.465);
-  //       context.font = '15px Arial';
-  //       context.fillStyle = 'white';
-  //       context.fillText('hardhat: 0.615', 0.43538331985473633 * width, 0.19206060469150543 * height, 0.19206060469150543 * height);
-  //       context.lineWidth = 2;
-  //       context.strokeRect(0.43538331985473633 * width, 0.19206060469150543 * height, width * 0.209, height * 0.465);      
-      
-  // tableDiv.appendChild(table);
-   
-  // });
-  // img.src = 'my_picture.jpg';
-
-  }
+        context.fillStyle = 'rgba(255,255,255,0.2)';
+        context.strokeStyle = 'yellow';
+        context.fillRect(bbox[1] * width, bbox[0] * height, width * (bbox[3] - bbox[1]),
+        height * (bbox[2] - bbox[0]));
+        context.font = '15px Arial';
+        context.fillStyle = 'black';
+        context.fillText(`${box.detectedClass}: ${box.detectedScore}`, parseFloat(bbox[1] * width).toFixed(2), parseFloat(bbox[0] * height).toFixed(2), parseFloat(bbox[0] * height).toFixed(2));
+        context.lineWidth = 2;
+        context.strokeRect(parseFloat(bbox[1] * width).toFixed(2), parseFloat(bbox[0] * height).toFixed(2), parseFloat(width * (bbox[3] - bbox[1])).toFixed(2), parseFloat(height * (bbox[2] - bbox[0])).toFixed(2));      
+      })
+      let objStr = 'Objects detected: ';
+      Object.keys(objDetected).map((key) => {
+        objStr += `${key}=${objDetected[key]} `
+      })
+      output.innerHTML = objStr;
+    });
+    img.src = '/static/input/image-old.png';
+  }  
 }
