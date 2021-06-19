@@ -25,6 +25,8 @@ const newModelPath = './model-new';
 const oldModelPath = './model-old';
 const staticPath = './public/js';
 const mmsPath = './mms-shared';
+const localPath = './local-shared';
+let sharedPath = '';
 let timer;
 const intervalMS = 10000;
 
@@ -80,11 +82,16 @@ let ieam = {
   checkImage: async () => {
     const imageFile = `${imagePath}/image.png`;
     if(fs.existsSync(imageFile)) {
-      console.log(imageFile)
-      const image = fs.readFileSync(imageFile);
-      const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
-      const inputTensor = decodedImage.expandDims(0);
-      await ieam.infernce(inputTensor);
+      try {
+        console.log(imageFile)
+        const image = fs.readFileSync(imageFile);
+        const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
+        const inputTensor = decodedImage.expandDims(0);
+        await ieam.infernce(inputTensor);
+      } catch(e) {
+        console.log(e);
+        fs.unlinkSync(`${imagePath}/image.png`);
+      }
     }  
   },  
   infernce: async (inputTensor) => {
@@ -141,8 +148,16 @@ let ieam = {
     });
   },
   checkMMS: () => {
-    let list = fs.readdirSync(mmsPath);
-    list = list.filter(item => /(\.zip)$/.test(item));
+    let list;
+    if(fs.existsSync(mmsPath)) {
+      list = fs.readdirSync(mmsPath);
+      list = list.filter(item => /(\.zip)$/.test(item));
+      sharedPath = mmsPath;  
+    } else {
+      list = fs.readdirSync(localPath);
+      list = list.filter(item => /(\.zip)$/.test(item));
+      sharedPath = localPath;
+    }
     return list;
   },
   unzipMMS: (files) => {
@@ -151,15 +166,15 @@ let ieam = {
       console.log('list', files);
       files.forEach((file) => {
         if(file === 'model.zip') {
-          arg = `unzip -o ${mmsPath}/${file} -d ${newModelPath}`;
+          arg = `unzip -o ${sharedPath}/${file} -d ${newModelPath}`;
         } else if(file === 'image.zip') {
-          arg = `unzip -o ${mmsPath}/${file} -d ${imagePath}`;
+          arg = `unzip -o ${sharedPath}/${file} -d ${imagePath}`;
         } else {
           observer.next();
           observer.complete();
         }
         exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
-          fs.unlinkSync(`${mmsPath}/${file}`);
+          fs.unlinkSync(`${sharedPath}/${file}`);
           if(!err) {
             observer.next();
             observer.complete();
@@ -197,12 +212,15 @@ let ieam = {
   loadModel: async (modelPath) => {
     try {
       delete(model);
+      delete(labels);
+      delete(version);
       model = await tfnode.node.loadSavedModel(modelPath);
       console.log('loading ', modelPath);
       labels = require(`${modelPath}/assets/labels.json`);
       version = require(`${modelPath}/assets/version.json`);
       console.log('version: ', version)
       if(modelPath === newModelPath) {
+        console.log('iam new')
         ieam.moveFiles(currentModelPath, oldModelPath)
         .subscribe({
           next: (v) => ieam.moveFiles(newModelPath, currentModelPath)
