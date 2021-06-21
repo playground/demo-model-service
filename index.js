@@ -24,7 +24,7 @@ const imagePath = './public/input';
 const newModelPath = './model-new';
 const oldModelPath = './model-old';
 const staticPath = './public/js';
-const mmsPath = './mms-shared';
+const mmsPath = '/mms-shared';
 const localPath = './local-shared';
 let sharedPath = '';
 let timer;
@@ -38,7 +38,7 @@ app.get('/',(req,res,next) => { //here just add next parameter
   res.sendFile(
     path.resolve( __dirname, "index.html" )
   )
-  next();
+  // next();
 })
 
 app.get("/ieam", (req, res) => {
