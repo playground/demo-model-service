@@ -1,13 +1,13 @@
-const tfnode = require('@tensorflow/tfjs-node');
+let tfnode = require('@tensorflow/tfjs-node');
 const fs = require('fs');
 const jsonfile = require('jsonfile');
 const { Observable, forkJoin } = require('rxjs');
 const cp = require('child_process'),
 exec = cp.exec;
 
-const express = require("express");
-const app = express();
-const fileUpload = require('express-fileupload');
+// const express = require("express");
+// const app = express();
+// const fileUpload = require('express-fileupload');
 const path = require('path');
 const winston = require('winston');
 const consoleTransport = new winston.transports.Console()
@@ -30,53 +30,10 @@ let sharedPath = '';
 let timer;
 const intervalMS = 10000;
 
-app.use(fileUpload());
-
-app.use('/static', express.static('public'));
-
-app.get('/',(req,res,next) => { //here just add next parameter
-  res.sendFile(
-    path.resolve( __dirname, "index.html" )
-  )
-  // next();
-})
-
-app.get("/ieam", (req, res) => {
-  res.json(["Rob", "Glen","Sanjeev","Joe","Jeff"]);
-});
-
-app.post('/upload', function(req, res) {
-  try {
-    if (!req.files || Object.keys(req.files).length === 0) {
-      return res.status(400).send('No files were uploaded.');
-    } else {
-      // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
-      let imageFile = req.files.imageFile;
-      let uploadPath = __dirname + `/public/input/image.png`;
-  
-      // Use the mv() method to place the file somewhere on your server
-      imageFile.mv(uploadPath, function(err) {
-        if (err)
-          return res.status(500).send(err);
-  
-        res.send({status: true, message: 'File uploaded!'});
-      });
-  
-    }  
-  } catch(err) {
-    res.status(500).send(err);
-  }
-});
-
-app.get("*",  (req, res) => {
-  res.sendFile(
-      path.resolve( __dirname, "index.html" )
-  )
-});
-
-app.listen(3000, () => {
- console.log("Server running on port 3000");
-});
+const state = {
+  server: null,
+  sockets: [],
+};
 
 let ieam = {
   checkImage: async () => {
@@ -214,10 +171,13 @@ let ieam = {
       delete(model);
       delete(labels);
       delete(version);
+      const startTime = tfnode.util.now();
       model = await tfnode.node.loadSavedModel(modelPath);
-      console.log('loading ', modelPath);
-      labels = require(`${modelPath}/assets/labels.json`);
-      version = require(`${modelPath}/assets/version.json`);
+      const endTime = tfnode.util.now();
+
+      console.log(`loading time:  ${modelPath}, ${endTime-startTime}`);
+      labels = jsonfile.readFileSync(`${modelPath}/assets/labels.json`);
+      version = jsonfile.readFileSync(`${modelPath}/assets/version.json`);
       console.log('version: ', version)
       if(modelPath === newModelPath) {
         console.log('iam new')
@@ -226,8 +186,15 @@ let ieam = {
           next: (v) => ieam.moveFiles(newModelPath, currentModelPath)
             .subscribe({
               next: (v) => {
-                console.log('reset timer');
-                ieam.resetTimer();
+                if(endTime-startTime < 5000) {
+                  console.log('new model did not load, restarting server...');
+                  ieam.restart();
+                } else {
+                  console.log('reset timer');
+                  ieam.renameFile(`${imagePath}/image-old.png`, `${imagePath}/image.png`);  
+                  ieam.checkImage();
+                  ieam.resetTimer();  
+                }
               },   
               error: (e) => {
                 console.log('reset timer');
@@ -283,8 +250,49 @@ let ieam = {
         ieam.setInterval(intervalMS);
       }
     }, ms);
-  }    
+  },
+  initialInference: () => {
+    ieam.renameFile(`${imagePath}/image-old.png`, `${imagePath}/image.png`);  
+  },
+  start: () => {
+    state.server = require('./server')().listen(3000, () => {
+      console.log('Started on 3000');
+    });
+    state.server.on('connection', (socket) => {
+      // console.log('Add socket', state.sockets.length + 1);
+      state.sockets.push(socket);
+    });
+  },
+  restart: () => {
+    // clean the cache
+    Object.keys(require.cache).forEach((id) => {
+      if(id.indexOf('/tfjs-node/') > 0) {
+        // console.log('Reloading', id);
+        delete require.cache[id];
+      }  
+    });
+    tfnode = require('@tensorflow/tfjs-node');
+    ieam.loadModel(currentModelPath);
+    ieam.initialInference();  
+
+    state.sockets.forEach((socket, index) => {
+      // console.log('Destroying socket', index + 1);
+      if (socket.destroyed === false) {
+        socket.destroy();
+      }
+    });
+  
+    state.sockets = [];
+  
+    state.server.close(() => {
+      console.log('Server is closed');
+      console.log('\n----------------- restarting -------------');
+      ieam.start();
+    });
+  }      
 }
 
+ieam.start();
 ieam.loadModel(currentModelPath)
+ieam.initialInference();  
 ieam.setInterval(intervalMS);
