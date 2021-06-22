@@ -23,7 +23,8 @@
     tr th:nth-child(n+2){text-align: right}
     tr td:nth-child(n+2){text-align: right}
   </style>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script type="text/javascript" src="/static/js/webcam.min.js"></script>
+  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script> -->
   <script src="/static/js/image.js"></script>
   <body onload="ieam.loadJson('/static/js/image.json')">
     <div>
@@ -34,10 +35,13 @@
         encType="multipart/form-data">
           <input type="file" name="imageFile" />
           <input type='submit' value='Upload!' />
-          <div class="output"></div>
-      </form>     
+      </form>
+      <video id="webcam" autoplay playsinline width="5" height="5"></video>
+      <audio id="snapSound" src="/static/js/audio_snap.wav" preload = "auto"></audio>
+     
       <div id="time"></div>
       <div class="version"></div>
+      <div class="output"></div>
       <br />
       <br />
       <table id="table"></table>
@@ -47,11 +51,8 @@
   
   </body>
   <script>
-  $(document).ready(function(){
-    ieam.onSubmit();
-  });
-
-  setInterval(() => {
-    ieam.loadJson('/static/js/image.json');
-  }, 10000)
+    document.addEventListener('DOMContentLoaded', (event) => {
+      ieam.onSubmit();
+      ieam.setInterval(5000);
+    })
   </script>

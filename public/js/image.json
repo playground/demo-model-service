@@ -2,48 +2,18 @@
   "bbox": [
     {
       "detectedBox": [
-        "0.108",
-        "0.098",
-        "0.961",
-        "0.932"
+        "0.026",
+        "0.328",
+        "0.215",
+        "0.538"
       ],
-      "detectedClass": "person",
-      "detectedScore": "0.998"
-    },
-    {
-      "detectedBox": [
-        "0.112",
-        "0.274",
-        "0.514",
-        "0.740"
-      ],
-      "detectedClass": "head",
-      "detectedScore": "0.992"
-    },
-    {
-      "detectedBox": [
-        "0.286",
-        "0.276",
-        "0.486",
-        "0.734"
-      ],
-      "detectedClass": "mask",
-      "detectedScore": "0.986"
-    },
-    {
-      "detectedBox": [
-        "0.603",
-        "0.034",
-        "0.934",
-        "0.821"
-      ],
-      "detectedClass": "lab_coat",
-      "detectedScore": "0.532"
+      "detectedClass": "hard-hat",
+      "detectedScore": "1.000"
     }
   ],
-  "elapsedTime": 263.0859680175781,
+  "elapsedTime": 11350.034631000133,
   "version": {
-    "name": "Good model",
+    "name": "Poor model",
     "version": "1.0.0"
   }
 }
