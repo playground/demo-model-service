@@ -29,6 +29,7 @@ const localPath = './local-shared';
 let sharedPath = '';
 let timer;
 const intervalMS = 10000;
+let count = 0;
 
 const state = {
   server: null,
@@ -171,6 +172,7 @@ let ieam = {
       delete(model);
       delete(labels);
       delete(version);
+      count++;
       const startTime = tfnode.util.now();
       model = await tfnode.node.loadSavedModel(modelPath);
       const endTime = tfnode.util.now();
@@ -186,7 +188,7 @@ let ieam = {
           next: (v) => ieam.moveFiles(newModelPath, currentModelPath)
             .subscribe({
               next: (v) => {
-                if(endTime-startTime < 5000) {
+                if(count > 2) {
                   console.log('new model did not load, restarting server...');
                   ieam.restart();
                 } else {
@@ -255,6 +257,7 @@ let ieam = {
     ieam.renameFile(`${imagePath}/image-old.png`, `${imagePath}/image.png`);  
   },
   start: () => {
+    count = 0;
     state.server = require('./server')().listen(3000, () => {
       console.log('Started on 3000');
     });

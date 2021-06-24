@@ -2,26 +2,16 @@
   "bbox": [
     {
       "detectedBox": [
-        "0.006",
-        "0.422",
-        "0.239",
-        "0.655"
+        "0.026",
+        "0.328",
+        "0.215",
+        "0.538"
       ],
       "detectedClass": "hard-hat",
       "detectedScore": "1.000"
-    },
-    {
-      "detectedBox": [
-        "0.006",
-        "0.069",
-        "0.219",
-        "0.254"
-      ],
-      "detectedClass": "hard-hat",
-      "detectedScore": "0.908"
     }
   ],
-  "elapsedTime": 193.40710000693798,
+  "elapsedTime": 239.05648700892925,
   "version": {
     "name": "Poor model",
     "version": "1.0.0"

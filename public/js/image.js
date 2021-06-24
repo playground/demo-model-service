@@ -33,7 +33,8 @@ let ieam = {
     })
   },
   onSubmit: () => {
-    console.log(ieam.prevJson)
+    console.log(ieam.prevJson);
+    clearInterval(ieam.timer);
     let $form = document.forms.namedItem('uploadForm');
     $form.addEventListener('submit', (evt) => {
       evt.preventDefault();
@@ -50,6 +51,7 @@ let ieam = {
         } else {
           oOutput.innerHTML = "Error " + xhr.status + " occurred when trying to upload your file.<br \/>";
         }
+        ieam.resetTimer();
       };
 
       xhr.open("POST", "/upload");
