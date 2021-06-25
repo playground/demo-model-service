@@ -20,6 +20,13 @@ module.exports = () => {
     res.json(["Rob", "Glen","Sanjeev","Joe","Jeff"]);
   });
 
+  process.env.npm_config_cameraOn = false;
+  app.get("/camera", (req, res) => {
+    console.log(req.query.on)
+    process.env.npm_config_cameraOn = req.query.on;
+    res.send({status: true, message: `Camera ${process.env.npm_config_cameraOn ? 'On' : 'Off'}`});
+  });
+
   app.post('/upload', function(req, res) {
     try {
       if (!req.files || Object.keys(req.files).length === 0) {

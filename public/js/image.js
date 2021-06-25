@@ -22,6 +22,17 @@ let ieam = {
     ieam.timer = null;
     ieam.setInterval(ieam.intervalMS);  
   },
+  toggleCam: (e) => {
+    clearInterval(ieam.timer);
+    ieam.timer = null;
+    const state = e.currentTarget.defaultValue === 'Camera Off';
+    e.currentTarget.defaultValue = state ? 'Camera On' : 'Camera Off';
+    fetch(`/camera?on=${state}`)
+      .then((res) => {
+        ieam.resetTimer();
+        console.log(res);
+      });
+  },
   captureCam: () => {
     const webcamElement = document.getElementById('webcam');
     const snapSoundElement = document.getElementById('snapSound');

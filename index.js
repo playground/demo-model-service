@@ -2,6 +2,7 @@ let tfnode = require('@tensorflow/tfjs-node');
 const fs = require('fs');
 const jsonfile = require('jsonfile');
 const { Observable, forkJoin } = require('rxjs');
+const NodeWebcam = require('node-webcam');
 const cp = require('child_process'),
 exec = cp.exec;
 
@@ -30,29 +31,98 @@ let sharedPath = '';
 let timer;
 const intervalMS = 10000;
 let count = 0;
+let previousImage;
+let doCapture = true;
 
 const state = {
   server: null,
   sockets: [],
 };
+process.env.npm_config_cameraOn = false;
+
+const opts = {
+
+  //Picture related
+
+  width: 1280,
+
+  height: 720,
+
+  quality: 100,
+
+  // Number of frames to capture
+  // More the frames, longer it takes to capture
+  // Use higher framerate for quality. Ex: 60
+  frames: 1,
+
+  //Delay in seconds to take shot
+  //if the platform supports miliseconds
+  //use a float (0.1)
+  //Currently only on windows
+  delay: 1,
+
+  //Save shots in memory
+  saveShots: true,
+
+  // [jpeg, png] support varies
+  // Webcam.OutputTypes
+
+  output: "jpeg",
+
+  //Which camera to use
+  //Use Webcam.list() for results
+  //false for default device
+  device: false,
+
+  // [location, buffer, base64]
+  // Webcam.CallbackReturnTypes
+  callbackReturn: "buffer",
+
+  //Logging
+  verbose: false
+};
+
+let webcam = NodeWebcam.create( opts );
 
 let ieam = {
+  capture: () => {
+    webcam.capture('./public/input/image.png', async ( err, data ) => {
+      if(!err) {
+        if(previousImage !== data) {
+          previousImage = data;
+        }
+        ieam.doCapture = false;  
+        return;
+      }  
+    });  
+  },
+  sleep: (ms) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  },
   checkImage: async () => {
-    const imageFile = `${imagePath}/image.png`;
+    if(process.env.npm_config_cameraOn == 'true' && ieam.doCapture) {
+      console.log('pause ', Boolean(process.env.npm_config_cameraOn), process.env.npm_config_cameraOn)
+      ieam.capture();
+    }
+    let imageFile = `${imagePath}/image.png`;
+    if(!fs.existsSync(imageFile)) {
+      imageFile = `${imagePath}/image.jpg`;
+    }
     if(fs.existsSync(imageFile)) {
       try {
         console.log(imageFile)
         const image = fs.readFileSync(imageFile);
         const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
         const inputTensor = decodedImage.expandDims(0);
-        await ieam.infernce(inputTensor);
+        await ieam.inference(inputTensor, imageFile);
+        ieam.doCapture = true;
       } catch(e) {
         console.log(e);
-        fs.unlinkSync(`${imagePath}/image.png`);
+        fs.unlinkSync(imageFile);
       }
     }  
   },  
-  infernce: async (inputTensor) => {
+  inference: async (inputTensor, imageFile) => {
     const startTime = tfnode.util.now();
     let outputTensor = await model.predict({input_tensor: inputTensor});
     const scores = await outputTensor['detection_scores'].arraySync();
@@ -80,7 +150,7 @@ let ieam = {
     console.log('time took: ', elapsedTime);
     console.log('build json...');
     jsonfile.writeFile(`${staticPath}/image.json`, {bbox: predictions, elapsedTime: elapsedTime, version: version}, {spaces: 2});
-    ieam.renameFile(`${imagePath}/image.png`, `${imagePath}/image-old.png`);  
+    ieam.renameFile(imageFile, `${imagePath}/image-old.png`);  
   },
   traverse: (dir, done) => {
     var results = [];
@@ -239,8 +309,8 @@ let ieam = {
   setInterval: (ms) => {
     timer = setInterval(async () => {
       let mmsFiles = ieam.checkMMS(); 
-      clearInterval(timer);
       if(mmsFiles && mmsFiles.length > 0) {
+        clearInterval(timer);
         ieam.unzipMMS(mmsFiles)
         .subscribe(async () => {
           await ieam.checkNewModel();
@@ -249,7 +319,6 @@ let ieam = {
       } else {
         await ieam.checkNewModel();
         ieam.checkImage();
-        ieam.setInterval(intervalMS);
       }
     }, ms);
   },
