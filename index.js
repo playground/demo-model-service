@@ -6,9 +6,6 @@ const NodeWebcam = require('node-webcam');
 const cp = require('child_process'),
 exec = cp.exec;
 
-// const express = require("express");
-// const app = express();
-// const fileUpload = require('express-fileupload');
 const path = require('path');
 const winston = require('winston');
 const consoleTransport = new winston.transports.Console()
@@ -53,13 +50,13 @@ const opts = {
   // Number of frames to capture
   // More the frames, longer it takes to capture
   // Use higher framerate for quality. Ex: 60
-  frames: 1,
+  frames: 60,
 
   //Delay in seconds to take shot
   //if the platform supports miliseconds
   //use a float (0.1)
   //Currently only on windows
-  delay: 1,
+  delay: 0,
 
   //Save shots in memory
   saveShots: true,

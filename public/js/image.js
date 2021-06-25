@@ -32,6 +32,7 @@ let ieam = {
         ieam.resetTimer();
         console.log(res);
       });
+    state ? document.querySelector('.submit').disabled = true : document.querySelector('.submit').disabled = false 
   },
   captureCam: () => {
     const webcamElement = document.getElementById('webcam');
@@ -49,24 +50,26 @@ let ieam = {
     let $form = document.forms.namedItem('uploadForm');
     $form.addEventListener('submit', (evt) => {
       evt.preventDefault();
-      console.log(ieam.prevJson)
+      // console.log(ieam.prevJson)
       let output = document.querySelector('div.output')
       const files = document.querySelector('[name=imageFile]').files;
-      let formData = new FormData();
-      formData.append('imageFile', files[0]);
-      let xhr = new XMLHttpRequest();
-      xhr.onload = function(oEvent) {
-        if (xhr.status == 200) {
-          output.innerHTML = "Uploaded!";
-          ieam.loadJson('/static/js/image.json');
-        } else {
-          oOutput.innerHTML = "Error " + xhr.status + " occurred when trying to upload your file.<br \/>";
-        }
-        ieam.resetTimer();
-      };
-
-      xhr.open("POST", "/upload");
-      xhr.send(formData);
+      if(files[0]) {
+        let formData = new FormData();
+        formData.append('imageFile', files[0]);
+        let xhr = new XMLHttpRequest();
+        xhr.onload = function(oEvent) {
+          if (xhr.status == 200) {
+            output.innerHTML = "Uploaded!";
+            ieam.loadJson('/static/js/image.json');
+          } else {
+            oOutput.innerHTML = "Error " + xhr.status + " occurred when trying to upload your file.<br \/>";
+          }
+          ieam.resetTimer();
+        };
+  
+        xhr.open("POST", "/upload");
+        xhr.send(formData);
+      }
     });
   },
   drawBBox: () => {
