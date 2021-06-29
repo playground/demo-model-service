@@ -81,6 +81,16 @@ const opts = {
 
 let webcam = NodeWebcam.create( opts );
 
+//Get list of cameras
+  // NodeWebcam.list( function( list ) {
+  //   console.log('list of camera: ', list);
+  //   list.forEach((cam) => console.log(cam))
+  //   if(list[0]) {
+  //     opts.device = list[0];
+  //     webcam = NodeWebcam.create( opts );
+  //   }
+  // });
+
 let ieam = {
   capture: () => {
     webcam.capture('./public/input/image.png', async ( err, data ) => {
