@@ -8,6 +8,7 @@ exec = cp.exec;
 
 const path = require('path');
 const winston = require('winston');
+const { platform } = require('os');
 const consoleTransport = new winston.transports.Console()
 const myWinstonOptions = {
     transports: [consoleTransport]
@@ -29,7 +30,6 @@ let timer;
 const intervalMS = 10000;
 let count = 0;
 let previousImage;
-let doCapture = true;
 
 const state = {
   server: null,
@@ -80,9 +80,10 @@ const opts = {
 };
 
 let webcam = NodeWebcam.create( opts );
+console.log('platform ', process.platform)
 
 let ieam = {
-  capture: () => {
+  capture2: () => {
     webcam.capture('./public/input/image.png', async ( err, data ) => {
       if(!err) {
         if(previousImage !== data) {
@@ -92,6 +93,19 @@ let ieam = {
         return;
       }  
     });  
+  },
+  capture: () => {
+    let arg = `ffmpeg -ss 0.5 -f avfoundation -r 30.000030 -i "0" -t 1 -vframes 1 ./public/input/image.png -y`;
+    if(process.platform !== 'darwin') {
+      arg = `ffmpeg -i /dev/video0 -vframes 1 ./public/input/image.png -y`;
+    }
+    exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
+      if(!err) {
+        console.log('photo captured...');
+      } else {
+        console.log(err);
+      }
+    });
   },
   sleep: (ms) => {
     return new Promise(resolve => setTimeout(resolve, ms));
