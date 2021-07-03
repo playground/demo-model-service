@@ -1,4 +1,6 @@
-FROM node:15.8.0
+FROM node:16.3.0
+
+RUN apt update -y && apt install ffmpeg -y
 
 WORKDIR /server
 

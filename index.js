@@ -2,13 +2,11 @@ let tfnode = require('@tensorflow/tfjs-node');
 const fs = require('fs');
 const jsonfile = require('jsonfile');
 const { Observable, forkJoin } = require('rxjs');
-const NodeWebcam = require('node-webcam');
 const cp = require('child_process'),
 exec = cp.exec;
 
 const path = require('path');
 const winston = require('winston');
-const { platform } = require('os');
 const consoleTransport = new winston.transports.Console()
 const myWinstonOptions = {
     transports: [consoleTransport]
@@ -37,67 +35,13 @@ const state = {
 };
 process.env.npm_config_cameraOn = false;
 
-const opts = {
-
-  //Picture related
-
-  width: 1280,
-
-  height: 720,
-
-  quality: 100,
-
-  // Number of frames to capture
-  // More the frames, longer it takes to capture
-  // Use higher framerate for quality. Ex: 60
-  frames: 60,
-
-  //Delay in seconds to take shot
-  //if the platform supports miliseconds
-  //use a float (0.1)
-  //Currently only on windows
-  delay: 0,
-
-  //Save shots in memory
-  saveShots: true,
-
-  // [jpeg, png] support varies
-  // Webcam.OutputTypes
-
-  output: "jpeg",
-
-  //Which camera to use
-  //Use Webcam.list() for results
-  //false for default device
-  device: false,
-
-  // [location, buffer, base64]
-  // Webcam.CallbackReturnTypes
-  callbackReturn: "buffer",
-
-  //Logging
-  verbose: false
-};
-
-let webcam = NodeWebcam.create( opts );
 console.log('platform ', process.platform)
 
 let ieam = {
-  capture2: () => {
-    webcam.capture('./public/input/image.png', async ( err, data ) => {
-      if(!err) {
-        if(previousImage !== data) {
-          previousImage = data;
-        }
-        ieam.doCapture = false;  
-        return;
-      }  
-    });  
-  },
   capture: () => {
     let arg = `ffmpeg -ss 0.5 -f avfoundation -r 30.000030 -i "0" -t 1 -vframes 1 ./public/input/image.png -y`;
     if(process.platform !== 'darwin') {
-      arg = `ffmpeg -i /dev/video0 -vframes 1 ./public/input/image.png -y`;
+      arg = `ffmpeg -i /dev/video0 -vframes 1 -vf "eq=contrast=1.5:brightness=0.5" ./public/input/image.png -y`;
     }
     exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
       if(!err) {
