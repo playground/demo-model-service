@@ -1,13 +1,10 @@
-const tfnode = require('@tensorflow/tfjs-node');
+let tfnode = require('@tensorflow/tfjs-node');
 const fs = require('fs');
 const jsonfile = require('jsonfile');
 const { Observable, forkJoin } = require('rxjs');
 const cp = require('child_process'),
 exec = cp.exec;
 
-const express = require("express");
-const app = express();
-const fileUpload = require('express-fileupload');
 const path = require('path');
 const winston = require('winston');
 const consoleTransport = new winston.transports.Console()
@@ -29,72 +26,59 @@ const localPath = './local-shared';
 let sharedPath = '';
 let timer;
 const intervalMS = 10000;
+let count = 0;
+let previousImage;
 
-app.use(fileUpload());
+const state = {
+  server: null,
+  sockets: [],
+};
+process.env.npm_config_cameraOn = false;
 
-app.use('/static', express.static('public'));
-
-app.get('/',(req,res,next) => { //here just add next parameter
-  res.sendFile(
-    path.resolve( __dirname, "index.html" )
-  )
-  // next();
-})
-
-app.get("/ieam", (req, res) => {
-  res.json(["Rob", "Glen","Sanjeev","Joe","Jeff"]);
-});
-
-app.post('/upload', function(req, res) {
-  try {
-    if (!req.files || Object.keys(req.files).length === 0) {
-      return res.status(400).send('No files were uploaded.');
-    } else {
-      // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
-      let imageFile = req.files.imageFile;
-      let uploadPath = __dirname + `/public/input/image.png`;
-  
-      // Use the mv() method to place the file somewhere on your server
-      imageFile.mv(uploadPath, function(err) {
-        if (err)
-          return res.status(500).send(err);
-  
-        res.send({status: true, message: 'File uploaded!'});
-      });
-  
-    }  
-  } catch(err) {
-    res.status(500).send(err);
-  }
-});
-
-app.get("*",  (req, res) => {
-  res.sendFile(
-      path.resolve( __dirname, "index.html" )
-  )
-});
-
-app.listen(3000, () => {
- console.log("Server running on port 3000");
-});
+console.log('platform ', process.platform)
 
 let ieam = {
+  capture: () => {
+    let arg = `ffmpeg -ss 0.5 -f avfoundation -r 30.000030 -i "0" -t 1 -vframes 1 ./public/input/image.png -y`;
+    if(process.platform !== 'darwin') {
+      // arg = `ffmpeg -i /dev/video0 -vframes 1 -vf "eq=contrast=1.5:brightness=0.5" ./public/input/image.png -y`;
+      arg = `fswebcam -r 640x480 --no-banner -S 25 public/input/image.jpg`;
+    }
+    exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
+      if(!err) {
+        console.log('photo captured...');
+      } else {
+        console.log(err);
+      }
+    });
+  },
+  sleep: (ms) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  },
   checkImage: async () => {
-    const imageFile = `${imagePath}/image.png`;
+    if(process.env.npm_config_cameraOn == 'true' && ieam.doCapture) {
+      console.log('pause ', Boolean(process.env.npm_config_cameraOn), process.env.npm_config_cameraOn)
+      ieam.capture();
+    }
+    let imageFile = `${imagePath}/image.png`;
+    if(!fs.existsSync(imageFile)) {
+      imageFile = `${imagePath}/image.jpg`;
+    }
     if(fs.existsSync(imageFile)) {
       try {
         console.log(imageFile)
         const image = fs.readFileSync(imageFile);
         const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
         const inputTensor = decodedImage.expandDims(0);
-        await ieam.infernce(inputTensor);
+        await ieam.inference(inputTensor, imageFile);
+        ieam.doCapture = true;
       } catch(e) {
         console.log(e);
-        fs.unlinkSync(`${imagePath}/image.png`);
+        fs.unlinkSync(imageFile);
       }
     }  
   },  
-  infernce: async (inputTensor) => {
+  inference: async (inputTensor, imageFile) => {
     const startTime = tfnode.util.now();
     let outputTensor = await model.predict({input_tensor: inputTensor});
     const scores = await outputTensor['detection_scores'].arraySync();
@@ -122,7 +106,7 @@ let ieam = {
     console.log('time took: ', elapsedTime);
     console.log('build json...');
     jsonfile.writeFile(`${staticPath}/image.json`, {bbox: predictions, elapsedTime: elapsedTime, version: version}, {spaces: 2});
-    ieam.renameFile(`${imagePath}/image.png`, `${imagePath}/image-old.png`);  
+    ieam.renameFile(imageFile, `${imagePath}/image-old.png`);  
   },
   traverse: (dir, done) => {
     var results = [];
@@ -214,10 +198,14 @@ let ieam = {
       delete(model);
       delete(labels);
       delete(version);
+      count++;
+      const startTime = tfnode.util.now();
       model = await tfnode.node.loadSavedModel(modelPath);
-      console.log('loading ', modelPath);
-      labels = require(`${modelPath}/assets/labels.json`);
-      version = require(`${modelPath}/assets/version.json`);
+      const endTime = tfnode.util.now();
+
+      console.log(`loading time:  ${modelPath}, ${endTime-startTime}`);
+      labels = jsonfile.readFileSync(`${modelPath}/assets/labels.json`);
+      version = jsonfile.readFileSync(`${modelPath}/assets/version.json`);
       console.log('version: ', version)
       if(modelPath === newModelPath) {
         console.log('iam new')
@@ -226,8 +214,15 @@ let ieam = {
           next: (v) => ieam.moveFiles(newModelPath, currentModelPath)
             .subscribe({
               next: (v) => {
-                console.log('reset timer');
-                ieam.resetTimer();
+                if(count > 2) {
+                  console.log('new model did not load, restarting server...');
+                  ieam.restart();
+                } else {
+                  console.log('reset timer');
+                  ieam.renameFile(`${imagePath}/image-old.png`, `${imagePath}/image.png`);  
+                  ieam.checkImage();
+                  ieam.resetTimer();  
+                }
               },   
               error: (e) => {
                 console.log('reset timer');
@@ -270,8 +265,8 @@ let ieam = {
   setInterval: (ms) => {
     timer = setInterval(async () => {
       let mmsFiles = ieam.checkMMS(); 
-      clearInterval(timer);
       if(mmsFiles && mmsFiles.length > 0) {
+        clearInterval(timer);
         ieam.unzipMMS(mmsFiles)
         .subscribe(async () => {
           await ieam.checkNewModel();
@@ -280,11 +275,52 @@ let ieam = {
       } else {
         await ieam.checkNewModel();
         ieam.checkImage();
-        ieam.setInterval(intervalMS);
       }
     }, ms);
-  }    
+  },
+  initialInference: () => {
+    ieam.renameFile(`${imagePath}/image-old.png`, `${imagePath}/image.png`);  
+  },
+  start: () => {
+    count = 0;
+    state.server = require('./server')().listen(3000, () => {
+      console.log('Started on 3000');
+    });
+    state.server.on('connection', (socket) => {
+      // console.log('Add socket', state.sockets.length + 1);
+      state.sockets.push(socket);
+    });
+  },
+  restart: () => {
+    // clean the cache
+    Object.keys(require.cache).forEach((id) => {
+      if(id.indexOf('/tfjs-node/') > 0) {
+        // console.log('Reloading', id);
+        delete require.cache[id];
+      }  
+    });
+    tfnode = require('@tensorflow/tfjs-node');
+    ieam.loadModel(currentModelPath);
+    ieam.initialInference();  
+
+    state.sockets.forEach((socket, index) => {
+      // console.log('Destroying socket', index + 1);
+      if (socket.destroyed === false) {
+        socket.destroy();
+      }
+    });
+  
+    state.sockets = [];
+  
+    state.server.close(() => {
+      console.log('Server is closed');
+      console.log('\n----------------- restarting -------------');
+      ieam.start();
+    });
+  }      
 }
 
+ieam.start();
 ieam.loadModel(currentModelPath)
+ieam.initialInference();  
 ieam.setInterval(intervalMS);
